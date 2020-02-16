@@ -9,8 +9,14 @@ const usersSchema = new Schema({
     },
 
     password: {
-        type: String,
-        required: [true, 'Password cannot be left blank']
+        passwordHash: {
+            type: String,
+            required: true
+        },
+        salt: {
+            type: String,
+            required: true
+        }
     },
 
     notes: [{

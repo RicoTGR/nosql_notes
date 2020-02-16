@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
 });
 
 // http://localhost:5000/api/change (PUT)
-router.put('/', async (req, res) => {
+router.put('/change', async (req, res) => {
   if(req.body.login)
     await User.updateOne({_id: req.body.id},
         {$set: {login: req.body.login}});
@@ -72,12 +72,21 @@ router.post('/notes/new/:id', async (req, res) => {
     text: req.body.text
   };
 
-  await User.updateOne({_id: req.params.id}, {$push: {'user.notes': note}});
+  await User.updateOne({_id: req.params.id}, {$push: {'notes': note}});
   let user = await User.findOne({_id: req.params.id});
   res.status(201).json(user.notes);
 });
 
 // http://localhost:5000/api/notes/edit/:index (POST)
+router.post('/notes/edit', async (req, res) => {
+  await User.updateOne({'notes._id': req.body._id},
+      {$set: {'notes.$.title': req.body.title,
+              'notes.$.text': req.body.text}});
+  let user = await User.findOne({'notes._id': req.body._id});
+  res.status(200).json(user.notes);
+});
+
+/*// http://localhost:5000/api/notes/edit/:index (POST)
 router.post('/notes/edit/:index', async (req, res) => {
   let way = 'notes.' + req.params.index;
   await User.updateOne({'notes._id': req.body._id},
@@ -85,10 +94,10 @@ router.post('/notes/edit/:index', async (req, res) => {
               [way + '.text']: req.body.text}});
   let user = await User.findOne({'notes._id': req.body._id});
   res.status(200).json(user.notes);
-});
+});*/
 
 // http://localhost:5000/api/notes/delete/:id (POST)
-router.post('notes/delete/:id', async (req, res) => {
+router.post('/notes/delete/:id', async (req, res) => {
   await User.updateOne({'notes._id': req.params.id}, {$pull: {notes: {_id: req.params.id}}});
   let user = await User.findOne({'notes._id': req.body._id});
   res.status(200).json(user.notes);
