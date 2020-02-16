@@ -14,18 +14,19 @@ router.post('/reg', async (req, res) => {
     };
 
     let user = User(userData);
-    await user.save();
-    res.status(201).json(user.notes);
+    await user.save(err => {if(err) return console.log(err)});
+    res.status(201).json(user);
   }
 });
 
 // http://localhost:5000/api/auth (POST)
 router.post('/auth', async (req, res) => {
-  let user = await User.findOne({login: req.body.login});
+  let user = await User.findOne({login: req.body.login},
+          err => {if(err) return console.log(err)});
 
   if(user) {
     if(user.password.passwordHash === sha512(req.body.password, user.password.salt).passwordHash) {
-      res.status(200).json(user.notes);
+      res.status(200).json(user);
     } else {
       res.status(401).json({message: 'Wrong password'});
     }
@@ -36,7 +37,8 @@ router.post('/auth', async (req, res) => {
 
 // http://localhost:5000/api/ (GET)
 router.get('/', async (req, res) => {
-  const users = await User.find({});
+  const users = await User.find({},
+          err => {if(err) return console.log(err)});
   res.status(200).json(users);
 });
 
@@ -44,16 +46,19 @@ router.get('/', async (req, res) => {
 router.put('/change', async (req, res) => {
   if(req.body.login)
     await User.updateOne({_id: req.body.id},
-        {$set: {login: req.body.login}});
+        {$set: {login: req.body.login}},
+            err => {if(err) return console.log(err)});
   if(req.body.password)
     await User.updateOne({_id: req.body.id},
-        {$set: {password: saltHashPassword(req.body.password)}});
+        {$set: {password: saltHashPassword(req.body.password)}},
+            err => {if(err) return console.log(err)});
   res.status(200).json({message: 'Changed'});
 });
 
 // http://localhost:5000/api/delete/:id (DELETE)
 router.delete('/:id', async (req, res) => {
-  await User.remove({_id: req.params.id});
+  await User.remove({_id: req.params.id},
+          err => {if(err) return console.log(err)});
   res.status(200).json({
     message: 'Deleted'
   })
@@ -61,46 +66,44 @@ router.delete('/:id', async (req, res) => {
 
 // http://localhost:5000/api/notes/:id (GET)
 router.get('/notes/:id', async (req, res) => {
-  const user = await User.find({_id: req.params.id});
-  res.status(200).json(user.notes);
+  const user = await User.find({_id: req.params.id},
+          err => {if(err) return console.log(err)});
+  res.status(200).json(user);
 });
 
 // http://localhost:5000/api/notes/:id (POST)
-router.post('/notes/new/:id', async (req, res) => {
+router.post('/notes/new', async (req, res) => {
   const note = {
     title: req.body.title,
     text: req.body.text
   };
 
-  await User.updateOne({_id: req.params.id}, {$push: {'notes': note}});
-  let user = await User.findOne({_id: req.params.id});
-  res.status(201).json(user.notes);
+  await User.updateOne({_id: req.body.id}, {$push: {'notes': note}},
+          err => {if(err) return console.log(err)});
+  let user = await User.findOne({_id: req.body.id},
+          err => {if(err) return console.log(err)});
+  res.status(201).json(user);
 });
 
 // http://localhost:5000/api/notes/edit/:index (POST)
 router.post('/notes/edit', async (req, res) => {
   await User.updateOne({'notes._id': req.body._id},
       {$set: {'notes.$.title': req.body.title,
-              'notes.$.text': req.body.text}});
-  let user = await User.findOne({'notes._id': req.body._id});
-  res.status(200).json(user.notes);
+              'notes.$.text': req.body.text}},
+          err => {if(err) return console.log(err)});
+  let user = await User.findOne({'notes._id': req.body._id},
+          err => {if(err) return console.log(err)});
+  res.status(200).json(user);
 });
-
-/*// http://localhost:5000/api/notes/edit/:index (POST)
-router.post('/notes/edit/:index', async (req, res) => {
-  let way = 'notes.' + req.params.index;
-  await User.updateOne({'notes._id': req.body._id},
-      {$set: {[way + '.title']: req.body.title,
-              [way + '.text']: req.body.text}});
-  let user = await User.findOne({'notes._id': req.body._id});
-  res.status(200).json(user.notes);
-});*/
 
 // http://localhost:5000/api/notes/delete/:id (POST)
 router.post('/notes/delete/:id', async (req, res) => {
-  await User.updateOne({'notes._id': req.params.id}, {$pull: {notes: {_id: req.params.id}}});
-  let user = await User.findOne({'notes._id': req.body._id});
-  res.status(200).json(user.notes);
+  await User.updateOne({'notes._id': req.params.id},
+      {$pull: {notes: {_id: req.params.id}}},
+          err => {if(err) return console.log(err)});
+  let user = await User.findOne({'notes._id': req.body._id},
+          err => {if(err) return console.log(err)});
+  res.status(200).json(user);
 });
 
 function genRandomString(length){
