@@ -77,8 +77,7 @@ router.post('/notes/new', async (req, res) => {
     title: req.body.title,
     text: req.body.text
   };
-
-  await User.updateOne({_id: req.body.id}, {$push: {'notes': note}},
+  User.updateOne({_id: req.body.id}, {$push: {notes: note}},
           err => {if(err) return console.log(err)});
   let user = await User.findOne({_id: req.body.id},
           err => {if(err) return console.log(err)});
@@ -97,11 +96,11 @@ router.post('/notes/edit', async (req, res) => {
 });
 
 // http://localhost:5000/api/notes/delete/:id (POST)
-router.post('/notes/delete/:id', async (req, res) => {
-  await User.updateOne({'notes._id': req.params.id},
-      {$pull: {notes: {_id: req.params.id}}},
+router.post('/notes/delete', async (req, res) => {
+  await User.updateOne({'notes._id': req.body.id},
+      {$pull: {notes: {_id: req.body.id}}},
           err => {if(err) return console.log(err)});
-  let user = await User.findOne({'notes._id': req.body._id},
+  let user = await User.findOne({_id: req.body.userId},
           err => {if(err) return console.log(err)});
   res.status(200).json(user);
 });

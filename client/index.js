@@ -1,19 +1,19 @@
 const card = note => {
   return `
-  <div>
-      <div>
-          <span>${note.title}</span>
-          <p style="white-space: pre-line;">${note.text}</p>
+  <div class="card">
+      <div class="card-body">
+          <span class="card-title">${note.title}</span>
+          <p style="white-space: pre-line;" class="card-text">${note.text}</p>
           <small>${new Date(note.date).toLocaleDateString()}</small>
       </div>
       <div>
-          <button class="note-delete" data-id="${note._id}">delete</button>
+          <button class="note-delete btn btn-primary" data-id="${note._id}">delete</button>
       </div>
   </div>
   `
 };
 
-const $notes = document.querySelector('#notes');
+let userId = '';
 const BASE_URL = '/api';
 
 class UserApi {
@@ -48,7 +48,7 @@ class UserApi {
 
 class NoteApi {
   static create(note) {
-    return fetch(`${BASE_URL}/new`, {
+    return fetch(`${BASE_URL}/notes/new`, {
       method: 'post',
       body: JSON.stringify(note),
       headers: {
@@ -69,26 +69,24 @@ class NoteApi {
     }).then(res => res.json())
   }
 
-  static delete(id, userId) {
-    return fetch(`${BASE_URL}/notes/delete/${id}`, {
+  static delete(ids) {
+    return fetch(`${BASE_URL}/notes/delete`, {
       method: 'post',
-      body: JSON.stringify(userId),
+      body: JSON.stringify(ids),
       headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
       }
     }).then(res => res.json())
   }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-
-  document.querySelector('#createNote').addEventListener('click', onCreateNote);
   document.querySelector('#notes').addEventListener('click', onDeleteNote);
 });
 
 function renderNotes(_notes = []) {
-
+  const $notes = document.querySelector('#notes');
   if (_notes.length > 0) {
     $notes.innerHTML = _notes.map(note => card(note)).join(' ')
   } else {
@@ -111,9 +109,7 @@ function onAuthUser() {
       if('message' in answer) {
         alert(answer.message);
       } else {
-        onClear();
-        getUserId(answer._id);
-        window.location.href="notes.html";
+        changeWorkflow(answer);
       }
     });
   }
@@ -133,8 +129,7 @@ function onRegUser() {
       if ('message' in answer) {
         alert(answer.message);
       } else {
-        getUserId(answer._id);
-        window.location.href="notes.html";
+        changeWorkflow(answer)
       }
     });
   }
@@ -145,7 +140,9 @@ function onDeleteUser() {
      UserApi.delete(userId).then((answer) => {
        alert(answer.message);
        userId = '';
-       window.location.href="index.html";
+       document.getElementById('auth-form').style.display="block";
+       document.getElementById('note-form').style.display="none";
+       document.getElementById('notes').style.display="none";
      })
   }
 }
@@ -156,8 +153,8 @@ function onCreateNote() {
 
   if ($title.value && $text.value) {
     const newNote = {
-      login: $title.value,
-      password: $text.value,
+      title: $title.value,
+      text: $text.value,
       id: userId
     };
 
@@ -168,13 +165,19 @@ function onCreateNote() {
         renderNotes(answer.notes);
       }
     });
+    $title.value = '';
+    $text.value = '';
   }
 }
 
 function onDeleteNote(event) {
   if(event.target.classList.contains('note-delete')) {
-    let id = event.getAttribute('note-id');
-    NoteApi.delete(id, userId).then(answer => {
+    let id = event.target.getAttribute('data-id');
+    let ids = {
+      id: id,
+      userId: userId
+    };
+    NoteApi.delete(ids).then(answer => {
       renderNotes(answer.notes);
     })
   }
@@ -187,4 +190,12 @@ function onClear() {
 
 function getUserId(id) {
   userId = id;
+}
+
+function changeWorkflow(user) {
+  renderNotes(user.notes);
+  getUserId(user._id);
+  document.getElementById('auth-form').style.display="none";
+  document.getElementById('note-form').style.display="block";
+  document.getElementById('notes').style.display="block";
 }
