@@ -40,7 +40,7 @@ class UserApi {
   }
 
   static delete(id) {
-    return fetch(`${BASE_URL}/${id}`, {
+    return fetch(`${BASE_URL}/delete/${id}`, {
       method: 'delete'
     }).then(res => res.json())
   }
@@ -93,7 +93,6 @@ function renderNotes(_notes = []) {
     $notes.innerHTML = `<div class="center">There are no notes yet</div>`
   }
 }
-
 
 function onAuthUser() {
   const $login = document.querySelector('#login');
@@ -183,18 +182,9 @@ function onDeleteNote(event) {
   }
 }
 
-function onClear() {
-  document.getElementsByName('login').value = '';
-  document.getElementsByName('password').value = '';
-}
-
-function getUserId(id) {
-  userId = id;
-}
-
 function changeWorkflow(user) {
   renderNotes(user.notes);
-  getUserId(user._id);
+  userId = user._id;
   document.getElementById('auth-form').style.display="none";
   document.getElementById('note-form').style.display="block";
   document.getElementById('notes').style.display="block";
